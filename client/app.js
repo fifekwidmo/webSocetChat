@@ -4,32 +4,41 @@ const messagesList = document.getElementById("messages-list");
 const addMessageForm = document.getElementById("add-messages-form");
 const userNameInput = document.getElementById("username");
 const messageContentInput = document.getElementById("message-content");
+const socket = io();
 let userName= '';
+socket.on('message', ({author, content}) => addMessage(author, content))
+socket.on('logged', ({name}) => addMessage('Chat Boy', `${name} has joined the conversation!`));
+socket.on('disconnected', ({name}) => addMessage('Chat Boy', `${name} has left the conversation!`))
 loginForm.addEventListener('submit', (event) => {
   login(event);
 });
-const login = () => {
+addMessageForm.addEventListener('submit', (event) => {
+  sendMessage(event);
+});
+const login = (event) => {
   event.preventDefault();
-  if(userNameInput.value == '') {
+  if(userNameInput.value === '') {
     alert('Type your name');
   } else {
-    userName == userNameInput.value;
+		userName = userNameInput.value;
+    socket.emit('logged', {name: userName, id: socket.id});
+		userName === userNameInput.value;
     loginForm.classList.remove('show');
     messagesSection.classList.add('show');
   }
 }
-addMessageForm.addEventListener('submit', (event) => {
-  sendMessage(event);
-});
-const sendMessage = () => {
+function sendMessage(event) {
   event.preventDefault();
-  if(messageContentInput.value == ''){
-    alert('Type your message');
-  } else {
-    addMessage(userName, messageContentInput.value);
-    messageContentInput.value= '';
+  let messageContent = messageContentInput.value;
+  if(!messageContent.length) {
+    alert('You have to type something!');
   }
-};
+  else {
+    addMessage(userName, messageContent);
+    socket.emit('message', {author: userName, content: messageContent})
+    messageContentInput.value === '';
+  }
+}
 function addMessage(author, content) {
   const message = document.createElement('li');
   message.classList.add('message');
